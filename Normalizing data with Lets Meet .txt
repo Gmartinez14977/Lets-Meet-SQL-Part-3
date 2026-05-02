@@ -1,0 +1,168 @@
+﻿-- 1. Identifying redundant columns
+ 
+/ *To improve data normalization and reduce redundancy in the Lets Meet Database, the following columns should be removed:
+ -- Venue_table:
+ 1. Country Column: The country column should be dropped if all cities are located in the United States. Including this column adds unnecessary redundancy to the data.
+ 2. Localized Country Name: this column should be removed as it adds redundancy to the venue table.
+ 3. Address 2:The address_2 column should be removed as it's unclear why an additional address column is needed for the same venue.
+ 4.  RAND(): Since generating a random value is unnecessary, the RAND() function is not ideal, and it only adds irrelevant information. 
+-- Event_table:
+ 5. Why: This column  does not contain any information and does not clearly indicate its connection to other columns.
+ This lack of relevant data and clarity reduces its value in the dataset, making it unnecessary to keep.
+ 6.Headcount: This column should be removed as it's unclear whether it represents the total event headcount or only individuals who have confirmed they will or will maybe attend to the event. 
+ -- City_table: 
+  7. Country:This column should be dropped if all cities are located in the United States. Including this column adds unnecessary redundancy to the data.
+  8.Localized_country_name:This column should be removed as it adds redundancy to the venue table.
+  9.Distance: This column should be removed as it lacks context on the points of comparison, making it uninformative.
+  -- Category table: 
+  10.Sort_name: This column should be removed because it duplicates information already provided in the category description column.
+  -- Grp_member:
+  11. Country: The country column should be dropped as all cities are located in the United States. Including this column adds unnecessary redundancy to the data.*/
+
+
+
+
+
+
+
+
+
+
+-- 2. Eliminating Redundant Columns
+
+
+ ALTER TABLE venue_
+ DROP COLUMN country;
+
+
+ALTER TABLE venue_
+ DROP COLUMN localized_country_name;
+ 
+ ALTER TABLE venue_
+ DROP COLUMN address_2;
+ 
+ ALTER TABLE venue_
+DROP COLUMN `RAND()`;
+
+
+ALTER TABLE event
+DROP COLUMN why;
+
+
+ALTER TABLE event
+DROP COLUMN headcount;
+
+
+ALTER TABLE city
+DROP COLUMN country;
+
+
+ALTER TABLE city 
+DROP COLUMN localized_country_name;
+
+
+ALTER TABLE grp_member 
+DROP COLUMN country;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- 3. Splitting Grp_Member Table 
+
+
+SELECT
+*
+FROM grp_member;
+
+
+DESCRIBE grp_member;
+
+
+/* 3NF Check 
+ 1. Executed DESCRIBE and SELECT statement on the grp_member table
+ 2. Reviewed the PRIMARY KEY on the Grp_member table and determined no Primary key had been set up yet. 
+ 3. Verified column names were unique across the tables.
+ 4. Confirmed consistency in data types across columns.
+ 5. Ensured column values were single values.
+ 6. Assessed for partial dependencies and confirmed none were present as the table did not have a Primary Key set up. 
+ 7. Evaluated for transitive dependencies and identified that member_name, member_status, hometown, and city are all dependent on member id.
+ In addition, the joined column is dependent on group_id.*/
+ 
+-- To ensure grp_member table complies with 3NF, the following changes were implemented:
+-- 1. Created a table to separate the information about members and the information about groups. 
+
+
+CREATE TABLE group_sign_ups 
+AS SELECT DISTINCT
+        member_id,
+        group_id,
+        joined
+FROM grp_member;
+
+
+CREATE TABLE members 
+AS SELECT DISTINCT 
+        member_id,
+    member_name,
+    member_status,
+    hometown,
+    city
+FROM grp_member;
+
+
+-- 2. Added Primary and foreign keys to connect both tables.
+ALTER TABLE members
+ADD PRIMARY KEY (member_id);
+
+
+ALTER TABLE group_sign_ups
+ADD FOREIGN KEY (member_id)
+REFERENCES members(member_id);
+
+
+ALTER TABLE group_sign_ups
+ADD FOREIGN KEY (group_id)
+REFERENCES grp (group_id);
+
+
+SELECT 
+    *
+FROM members;
+DESCRIBE members;
+
+
+SELECT 
+    *
+FROM group_sign_ups;
+DESCRIBE group_sign_ups;
+
+
+SELECT 
+    g.member_id,
+    g.group_id,
+    g.joined,
+    member_name,
+    member_status,
+    hometown,
+    city
+FROM
+    members AS m
+        JOIN group_sign_ups AS g ON m.member_id = g.member_id;
+    
+DROP TABLE grp_member;
