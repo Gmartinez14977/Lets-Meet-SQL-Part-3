@@ -21,13 +21,6 @@
 
 
 
-
-
-
-
-
-
-
 -- 2. Eliminating Redundant Columns
 
 
@@ -63,23 +56,6 @@ DROP COLUMN localized_country_name;
 
 ALTER TABLE grp_member 
 DROP COLUMN country;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
